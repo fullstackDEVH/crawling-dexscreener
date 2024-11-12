@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  # Main application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    env_file:
+      - .env.dev
+    depends_on:
+      - redis
+      - celery-worker
+      - celery-beat
+
+  # Celery Worker Service
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A dexscreener_crawling.dexscreener_crawling.tasks worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env.dev
+    depends_on:
+      - redis
+
+  # Celery Beat Service
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A dexscreener_crawling.dexscreener_crawling.tasks beat --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env.dev
+    depends_on:
+      - redis
+
+  # Redis Service
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
